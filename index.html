@@ -2,26 +2,27 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oasis App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Oasis v2</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --tg-theme-bg-color: #ffffff;
-            --tg-theme-text-color: #000000;
-            --tg-theme-hint-color: #999999;
-            --tg-theme-link-color: #007bff;
-            --tg-theme-button-color: #007bff;
-            --tg-theme-button-text-color: #ffffff;
-            --tg-theme-secondary-bg-color: #f8f9fa;
+            --bg-color: #0d0d0d;
+            --secondary-bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --hint-color: #666666;
+            --accent-color: #00ff7f; /* Яркий зеленый для подсветки */
+            --button-text-color: #0d0d0d;
+            --border-color: #333333;
+            --danger-color: #ff4d4d;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 15px;
-            background-color: var(--tg-theme-bg-color);
-            color: var(--tg-theme-text-color);
+            background-color: var(--bg-color);
+            color: var(--text-color);
             overflow-x: hidden;
         }
 
@@ -32,277 +33,420 @@
 
         h1, h2 {
             text-align: center;
-            color: var(--tg-theme-text-color);
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            font-weight: 600;
         }
-        
-        #user-info {
+
+        #profile-header {
             text-align: center;
             margin-bottom: 20px;
-            color: var(--tg-theme-hint-color);
+            padding: 10px;
+            background-color: var(--secondary-bg-color);
+            border-radius: 12px;
         }
+        #profile-header #username { font-size: 1.2em; font-weight: bold; }
+        #profile-header #balance { font-size: 1.5em; color: var(--accent-color); font-weight: bold; margin-top: 5px; }
 
         .tabs {
             display: flex;
             justify-content: space-around;
             margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .tab-button {
-            padding: 10px 20px;
+            padding: 12px 15px;
             cursor: pointer;
             border: none;
-            background-color: var(--tg-theme-secondary-bg-color);
-            color: var(--tg-theme-text-color);
-            border-radius: 8px;
+            background-color: transparent;
+            color: var(--hint-color);
             font-size: 16px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease-in-out;
         }
 
         .tab-button.active {
-            background-color: var(--tg-theme-button-color);
-            color: var(--tg-theme-button-text-color);
+            color: var(--accent-color);
+            border-bottom: 3px solid var(--accent-color);
         }
 
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
         .task-card {
-            background-color: var(--tg-theme-secondary-bg-color);
+            background-color: var(--secondary-bg-color);
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+            transition: box-shadow 0.2s;
+        }
+        .task-card:hover { box-shadow: 0 0 15px rgba(0, 255, 127, 0.1); }
+        .task-card h3 { margin-top: 0; color: var(--text-color); }
+        .task-card .reward { color: var(--accent-color); font-weight: bold; }
+        .task-card .status { font-style: italic; color: var(--hint-color); font-size: 0.9em; }
+        .task-card .creator { font-size: 0.8em; color: var(--hint-color); text-align: right; }
+
+        .form-group, .review-section {
+            margin-bottom: 20px;
         }
 
-        .task-card h3 {
-            margin-top: 0;
-        }
+        label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-color); }
 
-        .task-card p {
-            margin-bottom: 10px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        input[type="text"],
-        input[type="url"],
-        input[type="number"],
-        textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--tg-theme-hint-color);
-            border-radius: 8px;
-            background-color: var(--tg-theme-bg-color);
-            color: var(--tg-theme-text-color);
-            box-sizing: border-box;
-        }
-
-        button {
+        input, textarea {
             width: 100%;
             padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 5px rgba(0, 255, 127, 0.5);
+        }
+
+        button, .button {
+            display: inline-block;
+            text-align: center;
+            width: 100%;
+            padding: 14px;
             border-radius: 8px;
             border: none;
-            background-color: var(--tg-theme-button-color);
-            color: var(--tg-theme-button-text-color);
+            background-color: var(--accent-color);
+            color: var(--button-text-color);
             font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
+            transition: background-color 0.2s;
         }
+        button:hover { background-color: #00e671; }
         
-        .micro-task {
-            border: 1px dashed var(--tg-theme-hint-color);
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 8px;
+        button.secondary {
+            background-color: var(--secondary-bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        button.secondary:hover { background-color: var(--border-color); }
+
+        button.danger { background-color: var(--danger-color); }
+        button.danger:hover { background-color: #e63939; }
+
+        .button-group { display: flex; gap: 10px; }
+        
+        #modal {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #modal-content {
+            background-color: var(--secondary-bg-color);
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid var(--border-color);
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div id="user-info">Загрузка данных пользователя...</div>
-        <h1>Oasis</h1>
+        <div id="profile-header">
+            <div id="username"></div>
+            <div id="balance"></div>
+        </div>
 
         <div class="tabs">
-            <button class="tab-button active" onclick="openTab('tasks')">Лента Заданий</button>
-            <button class="tab-button" onclick="openTab('create')">Создать Задание</button>
+            <button class="tab-button active" onclick="openTab('feed')">Лента</button>
+            <button class="tab-button" onclick="openTab('my-tasks')">Мои Задания</button>
+            <button class="tab-button" onclick="openTab('create')">Создать</button>
         </div>
 
-        <!-- Лента Заданий -->
-        <div id="tasks" class="tab-content active">
-            <h2>Активные задания</h2>
-            <div id="task-list">
-                <!-- Карточки заданий будут здесь -->
-            </div>
-        </div>
-
-        <!-- Создание Задания -->
+        <div id="feed" class="tab-content active"></div>
+        <div id="my-tasks" class="tab-content"></div>
         <div id="create" class="tab-content">
-            <h2>Новое задание</h2>
-            <form id="create-task-form">
+             <form id="create-task-form">
                 <div class="form-group">
-                    <label for="content-url">URL Контента (видео, статья)</label>
-                    <input type="url" id="content-url" required>
-                </div>
-                <div class="form-group">
-                    <label for="description">Краткое описание задания</label>
+                    <label for="description">Описание</label>
                     <textarea id="description" rows="3" required></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="reward">Награда (в кристаллах)</label>
+                    <label for="reward">Награда (кристаллы)</label>
                     <input type="number" id="reward" min="1" required>
                 </div>
-                <div id="micro-tasks-container">
-                    <label>Микро-задания (что должен сделать исполнитель)</label>
-                    <div class="micro-task">
-                         <input type="text" placeholder="Вопрос или инструкция для исполнителя" class="micro-task-input" required>
-                    </div>
+                <div class="form-group">
+                    <label for="verification-steps">Что проверить у исполнителя? (Вопросы через Enter)</label>
+                    <textarea id="verification-steps" rows="4" required placeholder="1. Какой секретный ингредиент?\n2. Пришлите скриншот финального экрана."></textarea>
                 </div>
-                <button type="button" onclick="addMicroTask()">Добавить еще вопрос</button>
-                <br><br>
-                <button type="submit">Создать задание</button>
+                <button type="submit">Создать и зарезервировать средства</button>
             </form>
         </div>
     </div>
+    
+    <div id="modal">
+        <div id="modal-content"></div>
+    </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const tg = window.Telegram.WebApp;
-            tg.ready();
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
-            // Применение темы из Telegram
-            document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#ffffff');
-            document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
-            document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams.hint_color || '#999999');
-            document.documentElement.style.setProperty('--tg-theme-link-color', tg.themeParams.link_color || '#007bff');
-            document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#007bff');
-            document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#ffffff');
-            document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color || '#f8f9fa');
+        let state = {
+            users: {},
+            tasks: []
+        };
+        let currentUser;
 
-            const userInfoDiv = document.getElementById('user-info');
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                const user = tg.initDataUnsafe.user;
-                userInfoDiv.textContent = `Пользователь: ${user.first_name} (@${user.username})`;
-            } else {
-                userInfoDiv.textContent = 'Не удалось получить данные пользователя. Запустите через Telegram.';
-            }
-            
-            // Локальное хранилище для симуляции базы данных
-            let tasks = JSON.parse(localStorage.getItem('oasisTasks')) || [];
-
-            const taskList = document.getElementById('task-list');
-            const createTaskForm = document.getElementById('create-task-form');
-
-            function renderTasks() {
-                taskList.innerHTML = '';
-                if (tasks.length === 0) {
-                    taskList.innerHTML = '<p style="text-align:center;">Заданий пока нет. Создайте первое!</p>';
-                } else {
-                    tasks.forEach((task, index) => {
-                        const card = document.createElement('div');
-                        card.className = 'task-card';
-                        card.innerHTML = `
-                            <h3>${escapeHTML(task.description)}</h3>
-                            <p><strong>Награда:</strong> ${escapeHTML(task.reward.toString())} кристаллов</p>
-                            <p><strong>URL:</strong> <a href="${escapeHTML(task.url)}" target="_blank">${escapeHTML(task.url)}</a></p>
-                            <button onclick="startTask(${index})">Выполнить</button>
-                        `;
-                        taskList.appendChild(card);
-                    });
-                }
+        // --- CORE LOGIC ---
+        function initApp() {
+            const savedState = localStorage.getItem('oasisState');
+            if (savedState) {
+                state = JSON.parse(savedState);
             }
 
-            createTaskForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-                
-                const newTask = {
-                    url: document.getElementById('content-url').value,
-                    description: document.getElementById('description').value,
-                    reward: document.getElementById('reward').value,
-                    microTasks: Array.from(document.querySelectorAll('.micro-task-input')).map(input => input.value)
+            const userData = tg.initDataUnsafe.user || { id: 123, username: 'local_user', first_name: 'Local' };
+            currentUser = userData.id.toString();
+
+            if (!state.users[currentUser]) {
+                state.users[currentUser] = {
+                    id: currentUser,
+                    username: userData.username || userData.first_name,
+                    balance: 100 // Starting balance for new users
                 };
-
-                tasks.unshift(newTask);
-                localStorage.setItem('oasisTasks', JSON.stringify(tasks));
-                
-                renderTasks();
-                this.reset();
-                // Очищаем динамически добавленные поля
-                const microTasksContainer = document.getElementById('micro-tasks-container');
-                while (microTasksContainer.children.length > 2) {
-                    microTasksContainer.removeChild(microTasksContainer.lastChild);
-                }
-
-                tg.showPopup({
-                    title: 'Успех!',
-                    message: 'Ваше задание создано и доступно в ленте.',
-                    buttons: [{type: 'ok'}]
-                });
-
-                openTab('tasks');
-            });
-
-            window.startTask = function(index) {
-                const task = tasks[index];
-                let promptMessage = `Задание: ${task.description}\n\n`;
-                task.microTasks.forEach((mt, i) => {
-                    promptMessage += `${i+1}. ${mt}\n`;
-                });
-
-                tg.showPopup({
-                    title: 'Выполнение задания',
-                    message: promptMessage + "\nНажмите ОК, чтобы симулировать отправку ответов.",
-                    buttons: [
-                        {id: 'submit', text: 'Отправить ответы'},
-                        {type: 'cancel'}
-                    ]
-                }, (buttonId) => {
-                    if (buttonId === 'submit') {
-                        tg.showPopup({
-                            title: 'Проверка',
-                            message: 'Ответы отправлены! После проверки вам будет начислена награда (симуляция).',
-                            buttons: [{type: 'ok'}]
-                        });
-                    }
-                });
             }
-
-            renderTasks();
-        });
-
-        function openTab(tabName) {
-            const contents = document.querySelectorAll('.tab-content');
-            contents.forEach(content => content.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-
-            const buttons = document.querySelectorAll('.tab-button');
-            buttons.forEach(button => button.classList.remove('active'));
-            document.querySelector(`.tab-button[onclick="openTab('${tabName}')"]`).classList.add('active');
+            saveState();
+            renderAll();
         }
 
-        function addMicroTask() {
-            const container = document.getElementById('micro-tasks-container');
-            const microTaskDiv = document.createElement('div');
-            microTaskDiv.className = 'micro-task';
-            microTaskDiv.innerHTML = '<input type="text" placeholder="Еще один вопрос или инструкция" class="micro-task-input" required>';
-            container.appendChild(microTaskDiv);
+        function saveState() {
+            localStorage.setItem('oasisState', JSON.stringify(state));
+        }
+
+        function renderAll() {
+            renderProfile();
+            renderFeed();
+            renderMyTasks();
+        }
+
+        function findTask(taskId) {
+            return state.tasks.find(t => t.id === taskId);
+        }
+        
+        function findUser(userId) {
+            return state.users[userId];
+        }
+
+        // --- RENDERING ---
+        function renderProfile() {
+            const user = findUser(currentUser);
+            document.getElementById('username').innerText = `@${user.username}`;
+            document.getElementById('balance').innerText = `${user.balance.toFixed(2)} кристаллов`;
+        }
+
+        function renderFeed() {
+            const feedEl = document.getElementById('feed');
+            const openTasks = state.tasks.filter(t => t.status === 'open' && t.creatorId !== currentUser);
+            
+            if (openTasks.length === 0) {
+                feedEl.innerHTML = '<p style="text-align:center; color: var(--hint-color);">В ленте пока нет доступных заданий.</p>';
+                return;
+            }
+            
+            feedEl.innerHTML = openTasks.map(task => createTaskCard(task)).join('');
+        }
+
+        function renderMyTasks() {
+            const myTasksEl = document.getElementById('my-tasks');
+            const userTasks = state.tasks.filter(t => t.creatorId === currentUser || t.assigneeId === currentUser);
+            
+            if (userTasks.length === 0) {
+                myTasksEl.innerHTML = '<p style="text-align:center; color: var(--hint-color);">Вы еще не создали и не выполняли заданий.</p>';
+                return;
+            }
+
+            myTasksEl.innerHTML = userTasks.map(task => createTaskCard(task)).join('');
+        }
+
+        function createTaskCard(task) {
+            const creator = findUser(task.creatorId);
+            let actionButton = '';
+
+            if (task.status === 'open' && task.creatorId !== currentUser) {
+                actionButton = `<button onclick="startTask('${task.id}')">Выполнить</button>`;
+            } else if (task.status === 'in_progress' && task.assigneeId === currentUser) {
+                actionButton = `<button onclick="submitForReview('${task.id}')">Отправить на проверку</button>`;
+            } else if (task.status === 'pending_review' && task.creatorId === currentUser) {
+                 actionButton = `<button class="secondary" onclick="reviewTask('${task.id}')">Проверить</button>`;
+            }
+
+            return `
+                <div class="task-card">
+                    <h3>${escapeHTML(task.description)}</h3>
+                    <p><strong>Награда:</strong> <span class="reward">${task.reward}</span></p>
+                    <p class="status">Статус: ${task.status} | Создатель: @${creator.username}</p>
+                    ${actionButton}
+                </div>`;
+        }
+        
+        // --- TASK LIFECYCLE ---
+        document.getElementById('create-task-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const description = document.getElementById('description').value;
+            const reward = parseFloat(document.getElementById('reward').value);
+            const verification = document.getElementById('verification-steps').value;
+            const user = findUser(currentUser);
+
+            if (user.balance < reward) {
+                showAlert('Ошибка', 'Недостаточно средств на балансе.');
+                return;
+            }
+            
+            user.balance -= reward; // Escrow funds
+
+            const newTask = {
+                id: 'task_' + Date.now(),
+                creatorId: currentUser,
+                description,
+                reward,
+                verification,
+                status: 'open',
+                assigneeId: null,
+                submission: null
+            };
+
+            state.tasks.unshift(newTask);
+            saveState();
+            renderAll();
+            this.reset();
+            openTab('my-tasks');
+            showAlert('Успех', `Задание создано. ${reward} кристаллов зарезервировано.`);
+        });
+
+        function startTask(taskId) {
+            const task = findTask(taskId);
+            if (task.status !== 'open') return;
+            
+            task.status = 'in_progress';
+            task.assigneeId = currentUser;
+
+            saveState();
+            renderAll();
+            showAlert('Задание принято', `Теперь оно в разделе "Мои Задания".\n\nИнструкции:\n${escapeHTML(task.verification)}`);
+        }
+
+        function submitForReview(taskId) {
+            const task = findTask(taskId);
+            const submission = prompt("Введите ваши ответы/доказательства согласно инструкции:\n\n" + task.verification);
+
+            if (submission) {
+                task.status = 'pending_review';
+                task.submission = submission;
+                saveState();
+                renderAll();
+                showAlert('Отправлено', 'Ваш ответ отправлен создателю на проверку.');
+            }
+        }
+        
+        function reviewTask(taskId) {
+            const task = findTask(taskId);
+            const assignee = findUser(task.assigneeId);
+            
+            const modalContent = `
+                <h2>Проверка задания</h2>
+                <p><strong>Задание:</strong> ${escapeHTML(task.description)}</p>
+                <p><strong>Исполнитель:</strong> @${assignee.username}</p>
+                <div class="review-section">
+                    <label>Ответ исполнителя:</label>
+                    <textarea readonly rows="5">${escapeHTML(task.submission)}</textarea>
+                </div>
+                <div class="button-group">
+                    <button onclick="approveTask('${taskId}')">Одобрить и выплатить ${task.reward}</button>
+                    <button class="danger" onclick="rejectTask('${taskId}')">Отклонить</button>
+                </div>
+                <br>
+                <button class="secondary" onclick="closeModal()">Закрыть</button>
+            `;
+            showModal(modalContent);
+        }
+
+        function approveTask(taskId) {
+            const task = findTask(taskId);
+            const assignee = findUser(task.assigneeId);
+            
+            assignee.balance += task.reward;
+            task.status = 'completed';
+            
+            closeModal();
+            saveState();
+            renderAll();
+            showAlert('Одобрено', `Выплата ${task.reward} кристаллов отправлена @${assignee.username}.`);
+        }
+
+        function rejectTask(taskId) {
+            const task = findTask(taskId);
+            const creator = findUser(task.creatorId);
+            
+            creator.balance += task.reward; // Return escrowed funds
+            task.status = 'open';
+            task.assigneeId = null;
+            task.submission = null;
+
+            closeModal();
+            saveState();
+            renderAll();
+            showAlert('Отклонено', `Задание снова открыто для выполнения. Средства возвращены на ваш баланс.`);
+        }
+
+        // --- UI & UTILS ---
+        function openTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`.tab-button[onclick="openTab('${tabName}')"]`).classList.add('active');
+        }
+        
+        function showModal(content) {
+            document.getElementById('modal-content').innerHTML = content;
+            document.getElementById('modal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function showAlert(title, message) {
+            tg.showPopup({ title, message, buttons: [{ type: 'ok' }] });
         }
 
         function escapeHTML(str) {
+            if (typeof str !== 'string') return '';
             return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         }
-    </script>
+        
+        // --- Init ---
+        window.approveTask = approveTask;
+        window.rejectTask = rejectTask;
+        window.closeModal = closeModal;
+        window.reviewTask = reviewTask;
+        window.submitForReview = submitForReview;
+        window.startTask = startTask;
+        window.openTab = openTab;
 
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
 </body>
 </html>
