@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oasis App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #000000;
+            --tg-theme-hint-color: #999999;
+            --tg-theme-link-color: #007bff;
+            --tg-theme-button-color: #007bff;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-secondary-bg-color: #f8f9fa;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: var(--tg-theme-text-color);
+        }
+        
+        #user-info {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--tg-theme-hint-color);
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background-color: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .tab-button.active {
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .task-card {
+            background-color: var(--tg-theme-secondary-bg-color);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .task-card h3 {
+            margin-top: 0;
+        }
+
+        .task-card p {
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="url"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--tg-theme-hint-color);
+            border-radius: 8px;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .micro-task {
+            border: 1px dashed var(--tg-theme-hint-color);
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="user-info">Загрузка данных пользователя...</div>
+        <h1>Oasis</h1>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab('tasks')">Лента Заданий</button>
+            <button class="tab-button" onclick="openTab('create')">Создать Задание</button>
+        </div>
+
+        <!-- Лента Заданий -->
+        <div id="tasks" class="tab-content active">
+            <h2>Активные задания</h2>
+            <div id="task-list">
+                <!-- Карточки заданий будут здесь -->
+            </div>
+        </div>
+
+        <!-- Создание Задания -->
+        <div id="create" class="tab-content">
+            <h2>Новое задание</h2>
+            <form id="create-task-form">
+                <div class="form-group">
+                    <label for="content-url">URL Контента (видео, статья)</label>
+                    <input type="url" id="content-url" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Краткое описание задания</label>
+                    <textarea id="description" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="reward">Награда (в кристаллах)</label>
+                    <input type="number" id="reward" min="1" required>
+                </div>
+                <div id="micro-tasks-container">
+                    <label>Микро-задания (что должен сделать исполнитель)</label>
+                    <div class="micro-task">
+                         <input type="text" placeholder="Вопрос или инструкция для исполнителя" class="micro-task-input" required>
+                    </div>
+                </div>
+                <button type="button" onclick="addMicroTask()">Добавить еще вопрос</button>
+                <br><br>
+                <button type="submit">Создать задание</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+
+            // Применение темы из Telegram
+            document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#ffffff');
+            document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
+            document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams.hint_color || '#999999');
+            document.documentElement.style.setProperty('--tg-theme-link-color', tg.themeParams.link_color || '#007bff');
+            document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#007bff');
+            document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#ffffff');
+            document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color || '#f8f9fa');
+
+            const userInfoDiv = document.getElementById('user-info');
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const user = tg.initDataUnsafe.user;
+                userInfoDiv.textContent = `Пользователь: ${user.first_name} (@${user.username})`;
+            } else {
+                userInfoDiv.textContent = 'Не удалось получить данные пользователя. Запустите через Telegram.';
+            }
+            
+            // Локальное хранилище для симуляции базы данных
+            let tasks = JSON.parse(localStorage.getItem('oasisTasks')) || [];
+
+            const taskList = document.getElementById('task-list');
+            const createTaskForm = document.getElementById('create-task-form');
+
+            function renderTasks() {
+                taskList.innerHTML = '';
+                if (tasks.length === 0) {
+                    taskList.innerHTML = '<p style="text-align:center;">Заданий пока нет. Создайте первое!</p>';
+                } else {
+                    tasks.forEach((task, index) => {
+                        const card = document.createElement('div');
+                        card.className = 'task-card';
+                        card.innerHTML = `
+                            <h3>${escapeHTML(task.description)}</h3>
+                            <p><strong>Награда:</strong> ${escapeHTML(task.reward.toString())} кристаллов</p>
+                            <p><strong>URL:</strong> <a href="${escapeHTML(task.url)}" target="_blank">${escapeHTML(task.url)}</a></p>
+                            <button onclick="startTask(${index})">Выполнить</button>
+                        `;
+                        taskList.appendChild(card);
+                    });
+                }
+            }
+
+            createTaskForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                const newTask = {
+                    url: document.getElementById('content-url').value,
+                    description: document.getElementById('description').value,
+                    reward: document.getElementById('reward').value,
+                    microTasks: Array.from(document.querySelectorAll('.micro-task-input')).map(input => input.value)
+                };
+
+                tasks.unshift(newTask);
+                localStorage.setItem('oasisTasks', JSON.stringify(tasks));
+                
+                renderTasks();
+                this.reset();
+                // Очищаем динамически добавленные поля
+                const microTasksContainer = document.getElementById('micro-tasks-container');
+                while (microTasksContainer.children.length > 2) {
+                    microTasksContainer.removeChild(microTasksContainer.lastChild);
+                }
+
+                tg.showPopup({
+                    title: 'Успех!',
+                    message: 'Ваше задание создано и доступно в ленте.',
+                    buttons: [{type: 'ok'}]
+                });
+
+                openTab('tasks');
+            });
+
+            window.startTask = function(index) {
+                const task = tasks[index];
+                let promptMessage = `Задание: ${task.description}\n\n`;
+                task.microTasks.forEach((mt, i) => {
+                    promptMessage += `${i+1}. ${mt}\n`;
+                });
+
+                tg.showPopup({
+                    title: 'Выполнение задания',
+                    message: promptMessage + "\nНажмите ОК, чтобы симулировать отправку ответов.",
+                    buttons: [
+                        {id: 'submit', text: 'Отправить ответы'},
+                        {type: 'cancel'}
+                    ]
+                }, (buttonId) => {
+                    if (buttonId === 'submit') {
+                        tg.showPopup({
+                            title: 'Проверка',
+                            message: 'Ответы отправлены! После проверки вам будет начислена награда (симуляция).',
+                            buttons: [{type: 'ok'}]
+                        });
+                    }
+                });
+            }
+
+            renderTasks();
+        });
+
+        function openTab(tabName) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => button.classList.remove('active'));
+            document.querySelector(`.tab-button[onclick="openTab('${tabName}')"]`).classList.add('active');
+        }
+
+        function addMicroTask() {
+            const container = document.getElementById('micro-tasks-container');
+            const microTaskDiv = document.createElement('div');
+            microTaskDiv.className = 'micro-task';
+            microTaskDiv.innerHTML = '<input type="text" placeholder="Еще один вопрос или инструкция" class="micro-task-input" required>';
+            container.appendChild(microTaskDiv);
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+    </script>
+
+</body>
+</html>
